@@ -54,17 +54,17 @@ python drive_stream_v2.py <Google Drive URL or ID>
 
 #### Individual File
 ```bash
-python drive_stream_v2.py https://drive.google.com/file/d/1O_6sH8eUN8YsKnR4WzI7zxZQ2C25gXTi/view?usp=drive_link
+python drive_stream_v2.py https://drive.google.com/file/d/1O_6sH8eew8YscxR4WzI7zxrQ2r25gXTi/view?usp=drive_link
 ```
 
 #### Folder (Generates M3U Playlist)
 ```bash
-python drive_stream_v2.py https://drive.google.com/drive/folders/1-7IK1sZ_vqphG6L8zr7DOpPcUGwkLQnC?usp=drive_link
+python drive_stream_v2.py https://drive.google.com/drive/folders/1-7IK1sZ_vqphG6L8zrtDOpacUGckLQnC?usp=drive_link
 ```
 
 #### Using File/Folder ID Directly
 ```bash
-python drive_stream_v2.py 1O_6sH8eUN8YsKnR4WzI7zxZQ2C25gXTi
+python drive_stream_v2.py 1O_6so3eUN8YsaZR4WzI7zxZQ2C25gXTi
 ```
 
 ### Output
