@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Google Drive Folder Uploader
-Upload folders to Google Drive from command line using Google Drive API.
+Google Drive Uploader
+Upload files or folders to Google Drive from command line using Google Drive API.
 """
 
 import os
@@ -165,19 +165,25 @@ def upload_folder(service, local_path: str,
         
         print(f"Created folder: {folder_name} (ID: {drive_folder_id})")
         
+        folder_ids = {os.path.abspath(local_path): drive_folder_id}
+
         # Upload files and subdirectories
         for root, dirs, files in os.walk(local_path):
+            root_abs = os.path.abspath(root)
+
             # Determine current folder ID
             if root == local_path:
                 current_folder_id = drive_folder_id
             else:
                 if preserve_structure:
-                    relative_path = os.path.relpath(root, local_path)
+                    parent_root = os.path.abspath(os.path.dirname(root))
+                    parent_folder_id = folder_ids.get(parent_root, drive_folder_id)
                     subfolder_name = os.path.basename(root)
                     current_folder_id = create_folder(
-                        service, subfolder_name, current_folder_id)
+                        service, subfolder_name, parent_folder_id)
                     if not current_folder_id:
                         return False
+                    folder_ids[root_abs] = current_folder_id
                     print(f"  Created subfolder: {subfolder_name}")
                 else:
                     current_folder_id = drive_folder_id
@@ -193,6 +199,31 @@ def upload_folder(service, local_path: str,
     except Exception as e:
         print(f"✗ Error uploading folder: {e}")
         return False
+
+
+def upload_path(service, local_path: str,
+                parent_id: Optional[str] = None,
+                preserve_structure: bool = True) -> bool:
+    """Upload a file or folder to Google Drive."""
+    expanded_path = os.path.abspath(os.path.expanduser(local_path))
+
+    if not os.path.exists(expanded_path):
+        print(f"✗ Error: {local_path} does not exist")
+        return False
+
+    if os.path.isfile(expanded_path):
+        return upload_file(service, expanded_path, parent_id)
+
+    if os.path.isdir(expanded_path):
+        return upload_folder(
+            service,
+            expanded_path,
+            parent_id=parent_id,
+            preserve_structure=preserve_structure
+        )
+
+    print(f"✗ Error: {local_path} is not a regular file or directory")
+    return False
 
 
 def list_drive_folders(service, max_results: int = 10) -> list:
@@ -214,22 +245,30 @@ def list_drive_folders(service, max_results: int = 10) -> list:
 
 def main():
     """Main entry point."""
+    global CREDS_FILE
+
     parser = argparse.ArgumentParser(
-        description="Upload folders to Google Drive",
+        description="Upload files or folders to Google Drive",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Upload a file to Drive root
+  python google_drive_uploader.py /path/to/file.zip
+
   # Upload a folder to Drive root
   python google_drive_uploader.py /path/to/folder
+
+  # Upload multiple files/folders to Drive root
+  python google_drive_uploader.py /path/to/file.zip /path/to/folder
   
   # Upload with custom authentication
-  python google_drive_uploader.py /path/to/folder --creds credentials.json
+  python google_drive_uploader.py /path/to/file-or-folder --creds credentials.json
   
   # Upload to specific Drive folder (by ID)
-  python google_drive_uploader.py /path/to/folder --parent-id FOLDER_ID
+  python google_drive_uploader.py /path/to/file-or-folder --parent-id FOLDER_ID
   
   # Use service account authentication
-  python google_drive_uploader.py /path/to/folder --service-account sa.json
+  python google_drive_uploader.py /path/to/file-or-folder --service-account sa.json
   
   # List existing folders in Drive
   python google_drive_uploader.py --list
@@ -240,9 +279,9 @@ Examples:
     )
     
     parser.add_argument(
-        "folder",
-        nargs='?',
-        help="Local folder path to upload"
+        "paths",
+        nargs='*',
+        help="Local file or folder path(s) to upload"
     )
     parser.add_argument(
         "-p", "--parent-id",
@@ -273,7 +312,7 @@ Examples:
     args = parser.parse_args()
     
     # Use provided credentials file or default
-    creds_file = args.creds if args.creds else CREDS_FILE
+    CREDS_FILE = args.creds if args.creds else CREDS_FILE
     
     # Get service
     service = get_service(
@@ -292,18 +331,21 @@ Examples:
             print(f"  {folder['name']} (ID: {folder['id']})")
         return 0
     
-    # Upload folder
-    if not args.folder:
+    # Upload files and folders
+    if not args.paths:
         parser.print_help()
         return 1
     
-    print(f"Starting upload of: {args.folder}")
-    success = upload_folder(
-        service,
-        args.folder,
-        parent_id=args.parent_id,
-        preserve_structure=not args.no_structure
-    )
+    success = True
+    for path in args.paths:
+        print(f"Starting upload of: {path}")
+        if not upload_path(
+            service,
+            path,
+            parent_id=args.parent_id,
+            preserve_structure=not args.no_structure
+        ):
+            success = False
     
     if success:
         print("\n✓ Upload completed successfully!")
