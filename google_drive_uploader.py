@@ -336,8 +336,36 @@ Examples:
         parser.print_help()
         return 1
     
+    # Resolve paths (handles paths with spaces whether passed as a single arg or split across multiple args)
+    resolved_paths = []
+    i = 0
+    while i < len(args.paths):
+        p = args.paths[i]
+        if os.path.exists(p):
+            resolved_paths.append(p)
+            i += 1
+            continue
+        # Check if combining with subsequent args forms an existing path
+        combined = p
+        found = False
+        for j in range(i + 1, len(args.paths)):
+            combined += " " + args.paths[j]
+            if os.path.exists(combined):
+                resolved_paths.append(combined)
+                i = j + 1
+                found = True
+                break
+        if not found:
+            # If p contains spaces, check if it was multiple existing files passed in a single string
+            parts = p.split()
+            if len(parts) > 1 and all(os.path.exists(part) for part in parts):
+                resolved_paths.extend(parts)
+            else:
+                resolved_paths.append(p)
+            i += 1
+
     success = True
-    for path in args.paths:
+    for path in resolved_paths:
         print(f"Starting upload of: {path}")
         if not upload_path(
             service,

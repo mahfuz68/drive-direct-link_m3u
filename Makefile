@@ -28,25 +28,29 @@ ARGS ?=
 ifeq ($(firstword $(MAKECMDGOALS)),upload)
   UPLOAD_POS_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval .PHONY: $(UPLOAD_POS_ARGS))
-  $(eval $(UPLOAD_POS_ARGS):;@true)
+  %:
+	@true
 endif
 
 ifeq ($(firstword $(MAKECMDGOALS)),download)
   DOWNLOAD_POS_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval .PHONY: $(DOWNLOAD_POS_ARGS))
-  $(eval $(DOWNLOAD_POS_ARGS):;@true)
+  %:
+	@true
 endif
 
 ifeq ($(firstword $(MAKECMDGOALS)),stream)
   STREAM_POS_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval .PHONY: $(STREAM_POS_ARGS))
-  $(eval $(STREAM_POS_ARGS):;@true)
+  %:
+	@true
 endif
 
 ifeq ($(firstword $(MAKECMDGOALS)),run)
   RUN_POS_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval .PHONY: $(RUN_POS_ARGS))
-  $(eval $(RUN_POS_ARGS):;@true)
+  %:
+	@true
 endif
 
 .PHONY: help venv install install-cli install-all setup check-creds token run stream download upload list-folders clean clean-token clean-all
@@ -201,7 +205,7 @@ upload: check-creds
 	  echo "   or: make upload SRC=<file_or_directory_path> [PARENT=<parent_folder_id>]"; \
 	  exit 1; \
 	fi
-	$(PYTHON) google_drive_uploader.py $(if $(SRC),"$(SRC)",$(UPLOAD_POS_ARGS)) $(UP_ARGS)
+	$(PYTHON) google_drive_uploader.py $(if $(SRC),"$(SRC)","$(UPLOAD_POS_ARGS)") $(UP_ARGS)
 
 list-folders: check-creds
 	$(PYTHON) google_drive_uploader.py --list $(if $(CREDS),--creds "$(CREDS)",)
