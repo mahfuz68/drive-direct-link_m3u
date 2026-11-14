@@ -47,7 +47,29 @@ pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-pyt
 
 ## Usage
 
-### Basic Usage
+### Makefile Quick Commands
+
+You can use `make` for quick command execution with positional file paths and URLs:
+
+```bash
+# Upload a file or folder directly
+make upload ./file.txt
+make upload /workspaces/dd-fe/README.md
+make upload ./my_folder PARENT=<parent_folder_id>
+
+# Stream / Generate direct link or M3U playlist
+make stream <Google-Drive-URL-or-ID>
+# or
+make run <Google-Drive-URL-or-ID>
+
+# Download a file or folder
+make download <Google-Drive-URL-or-ID> [DIR=down_files]
+
+# List Google Drive folders
+make list-folders
+```
+
+### Basic Usage (Python Scripts)
 
 ```bash
 python drive_stream_v2.py <Google Drive URL or ID>
